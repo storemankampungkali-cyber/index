@@ -1,953 +1,399 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS | Premium Inventory</title>
-    <!-- Font Inter untuk kesan modern -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- XLSX Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
-    <style>
-        :root {
-            /* Palette Cyber Luxury */
-            --bg-dark: #0f172a;       /* Deep Slate */
-            --bg-panel: #1e293b;      /* Lighter Slate */
-            --glass-bg: rgba(30, 41, 59, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            
-            --primary: #fbbf24;       /* Gold/Amber */
-            --primary-hover: #d97706;
-            --danger: #ef4444;
-            --success: #10b981;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            
-            --shadow-card: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-            --shadow-glow: 0 0 20px rgba(251, 191, 36, 0.15);
-            
-            --radius: 16px;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+<base target="_top">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WAREFLOW – Warehouse Management</title>
+<script async src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+/* ============================== */
+/* VARIABLES & RESET */
+/* ============================== */
+:root {
+--bg: #070b14;
+--panel: rgba(255, 255, 255, 0.08);
+--stroke: rgba(255, 255, 255, 0.14);
+--blue: #1a5cff; --cyan: #22d3ee; --green: #10b981; --red: #ef4444; --yellow: #f59e0b; --purple: #8b5cf6;
+--text: #e6eefc; --muted: #9fb3d9;
+}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(251, 191, 36, 0.08), transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.08), transparent 25%);
-            color: var(--text-main);
-            height: 100vh;
-            overflow: hidden;
-        }
+body {
+margin: 0;
+background:
+radial-gradient(1200px 600px at 20% -10%, rgba(26, 92, 255, 0.35), transparent),
+radial-gradient(900px 500px at 90% 10%, rgba(34, 211, 238, 0.25), transparent),
+var(--bg);
+color: var(--text);
+font-family: ui-sans-serif, system-ui, Segoe UI, Arial;
+line-height: 1.5;
+overflow: hidden;
+height: 100vh;
+display: flex;
+}
 
-        /* --- Animations --- */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes spin { to { transform: rotate(360deg); } }
+/* ============================== */
+/* LOGIN SCREEN STYLES */
+/* ============================== */
+#loginScreen {
+width: 100%;
+height: 100%;
+position: fixed;
+top: 0;
+left: 0;
+z-index: 9999;
+display: flex;
+align-items: center;
+justify-content: center;
+background: radial-gradient(1200px 600px at 20% -10%, rgba(26, 92, 255, 0.35), transparent),
+radial-gradient(900px 500px at 90% 10%, rgba(34, 211, 238, 0.25), transparent),
+var(--bg);
+transition: opacity 0.5s ease;
+}
 
-        /* --- Layout --- */
-        .app-container { display: flex; height: 100vh; width: 100%; }
-        
-        /* Sidebar */
-        .sidebar {
-            width: 260px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            border-right: 1px solid var(--glass-border);
-            display: flex; flex-direction: column;
-            padding: 24px;
-            z-index: 10;
-        }
+.login-box {
+width: 100%;
+max-width: 400px;
+padding: 32px;
+background: rgba(15, 23, 42, 0.96);
+border: 1px solid var(--stroke);
+border-radius: 18px;
+box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+text-align: center;
+}
 
-        .brand {
-            font-size: 24px; font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 40px;
-            letter-spacing: -0.5px;
-            display: flex; align-items: center; gap: 10px;
-            text-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
-        }
+/* ============================== */
+/* APP LAYOUT (SIDEBAR) */
+/* ============================== */
+.app-wrapper {
+display: none;
+width: 100%;
+height: 100%;
+}
 
-        .nav-menu { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-        
-        .nav-item {
-            display: flex; align-items: center; gap: 12px;
-            padding: 12px 16px;
-            color: var(--text-muted);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: var(--transition);
-            font-size: 14px; font-weight: 500;
-        }
-        .nav-item:hover { background: rgba(255,255,255,0.03); color: var(--text-main); }
-        .nav-item.active {
-            background: linear-gradient(90deg, rgba(251, 191, 36, 0.15), transparent);
-            color: var(--primary);
-            border-left: 3px solid var(--primary);
-        }
-        .nav-item svg { width: 20px; height: 20px; stroke-width: 2; }
+.sidebar {
+width: 280px;
+min-width: 280px;
+background: var(--panel);
+border-right: 1px solid var(--stroke);
+display: flex;
+flex-direction: column;
+padding: 24px 16px;
+backdrop-filter: blur(18px);
+z-index: 100;
+transition: width 0.3s ease;
+}
 
-        /* Main Content */
-        .main-content {
-            flex: 1; position: relative; overflow: hidden;
-            display: flex; flex-direction: column;
-        }
+.sidebar.closed { width: 0; min-width: 0; padding: 0; opacity: 0; border: none; }
 
-        .header {
-            height: 70px;
-            border-bottom: 1px solid var(--glass-border);
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 32px;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(5px);
-        }
+.sidebar-brand {
+display: flex; gap: 12px; align-items: center;
+font-weight: 700; font-size: 18px; margin-bottom: 24px; color: var(--cyan);
+}
 
-        .content-scroll {
-            flex: 1; overflow-y: auto; padding: 32px;
-            scroll-behavior: smooth;
-        }
-        
-        /* Custom Scrollbar */
-        .content-scroll::-webkit-scrollbar { width: 8px; }
-        .content-scroll::-webkit-scrollbar-track { background: transparent; }
-        .content-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        .content-scroll::-webkit-scrollbar-thumb:hover { background: #475569; }
+.tabs { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; }
 
-        /* --- Components --- */
-        
-        /* Card */
-        .card {
-            background: var(--bg-panel);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--radius);
-            padding: 24px;
-            box-shadow: var(--shadow-card);
-            animation: fadeIn 0.4s ease-out;
-            margin-bottom: 24px;
-        }
+.tab-btn {
+cursor: pointer; padding: 12px 16px; border-radius: 12px;
+border: 1px solid var(--stroke); background: rgba(255, 255, 255, 0.06);
+display: flex; gap: 12px; align-items: center; color: var(--text);
+transition: .2s; font-size: 14px;
+}
+.tab-btn:hover { background: rgba(255, 255, 255, 0.1); }
+.tab-btn.active {
+background: linear-gradient(135deg, rgba(26, 92, 255, 0.35), rgba(34, 211, 238, 0.18));
+border-color: var(--cyan);
+}
 
-        /* Stats Grid */
-        .stats-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 24px; margin-bottom: 32px;
-        }
-        .stat-card {
-            background: linear-gradient(145deg, #1e293b, #182235);
-            padding: 24px; border-radius: var(--radius);
-            border: 1px solid var(--glass-border);
-            position: relative; overflow: hidden;
-        }
-        .stat-card::after {
-            content: ''; position: absolute; top:0; right:0; width: 80px; height: 80px;
-            background: radial-gradient(circle, rgba(255,255,255,0.05), transparent 70%);
-            border-radius: 50%;
-        }
-        .stat-label { font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-        .stat-value { font-size: 32px; font-weight: 700; color: var(--text-main); }
-        .stat-icon {
-            position: absolute; bottom: 20px; right: 20px;
-            width: 40px; height: 40px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 10px; display: flex; align-items: center; justify-content: center;
-            color: var(--primary);
-        }
+.main-content { flex: 1; overflow-y: auto; padding: 24px; position: relative; }
 
-        /* Tables */
-        .table-container {
-            background: var(--bg-panel); border-radius: var(--radius);
-            border: 1px solid var(--glass-border); overflow: hidden;
-        }
-        table { width: 100%; border-collapse: collapse; }
-        th {
-            background: rgba(0,0,0,0.2); text-align: left; padding: 16px;
-            font-weight: 600; font-size: 12px; text-transform: uppercase; color: var(--text-muted);
-            border-bottom: 1px solid var(--glass-border);
-        }
-        td { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 14px; }
-        tr:hover td { background: rgba(255,255,255,0.02); }
-        tr:last-child td { border-bottom: none; }
+/* COMPONENTS */
+.glass-panel {
+background: var(--panel); border: 1px solid var(--stroke); border-radius: 18px;
+padding: 20px; display: none;
+}
+.glass-panel.active { display: block; }
 
-        /* Inputs & Buttons */
-        .form-control {
-            width: 100%; padding: 12px 16px;
-            background: #0f172a; border: 1px solid #334155;
-            color: white; border-radius: 8px; font-size: 14px;
-            transition: var(--transition);
-        }
-        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(251,191,36,0.1); }
-        
-        .btn {
-            padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer;
-            font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 8px;
-            transition: var(--transition);
-        }
-        .btn-primary {
-            background: var(--primary); color: #0f172a;
-            box-shadow: 0 4px 12px rgba(251,191,36,0.2);
-        }
-        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
-        .btn-outline {
-            background: transparent; border: 1px solid var(--glass-border); color: var(--text-main);
-        }
-        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
-        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
-        .btn-danger:hover { background: var(--danger); color: white; }
+.input {
+width: 100%; padding: 12px 14px; border-radius: 14px;
+border: 1px solid var(--stroke); background: rgba(0, 0, 0, 0.18);
+color: var(--text); outline: none; font-size: 16px;
+}
+.input:focus { border-color: var(--cyan); }
 
-        /* Toast Notification */
-        .toast-container {
-            position: fixed; top: 24px; right: 24px; z-index: 10000;
-            display: flex; flex-direction: column; gap: 12px;
-        }
-        .toast {
-            min-width: 300px; padding: 16px; border-radius: 12px;
-            background: var(--bg-panel); border: 1px solid var(--glass-border);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: flex; align-items: center; gap: 12px;
-            animation: fadeIn 0.3s ease-out forwards;
-            backdrop-filter: blur(10px);
-        }
-        .toast.success { border-left: 4px solid var(--success); }
-        .toast.error { border-left: 4px solid var(--danger); }
-        .toast.info { border-left: 4px solid var(--primary); }
-        .toast-content h4 { font-size: 14px; margin-bottom: 2px; color: var(--text-main); }
-        .toast-content p { font-size: 12px; color: var(--text-muted); }
+.btn {
+padding: 12px 18px; border-radius: 14px; border: 1px solid var(--stroke);
+background: rgba(26, 92, 255, 0.25); color: var(--text); cursor: pointer;
+display: flex; gap: 8px; align-items: center; justify-content: center; transition: all .3s;
+}
+.btn-primary { background: var(--blue); color: white; }
+.btn-success { background: rgba(16, 185, 129, 0.25); color: #10b981; }
+.btn-danger { background: rgba(239, 68, 68, 0.25); color: #ef4444; }
 
-        /* Autocomplete */
-        .autocomplete-items {
-            position: absolute; top: 100%; left: 0; right: 0;
-            background: var(--bg-panel); border: 1px solid var(--glass-border);
-            border-radius: 8px; margin-top: 4px; z-index: 50;
-            max-height: 250px; overflow-y: auto;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
-        .autocomplete-item {
-            padding: 12px 16px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05);
-            display: flex; justify-content: space-between;
-        }
-        .autocomplete-item:hover, .autocomplete-item.active { background: rgba(251,191,36,0.1); }
-        
-        /* Unit Toggles */
-        .unit-group { display: flex; gap: 8px; margin-top: 8px; }
-        .unit-btn {
-            flex: 1; padding: 8px; background: rgba(255,255,255,0.03);
-            border: 1px solid var(--glass-border); color: var(--text-muted);
-            border-radius: 6px; cursor: pointer; font-size: 12px; transition: var(--transition);
-        }
-        .unit-btn.active { background: var(--primary); color: #0f172a; border-color: var(--primary); font-weight: 600; }
+.toast {
+position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
+background: linear-gradient(135deg, rgba(26, 92, 255, 0.95), rgba(34, 211, 238, 0.9));
+border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 12px; padding: 16px 24px;
+z-index: 99999; font-weight: 600; min-width: 300px; opacity: 0; transition: all 0.4s;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.success { background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(34, 197, 94, 0.9)); }
+.toast.error { background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.9)); }
 
-        /* Utility */
-        .text-gold { color: var(--primary); }
-        .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
-        .badge-red { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
-        .badge-green { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
-        
-        .hidden { display: none !important; }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; }
-        .mt-4 { margin-top: 16px; }
-        .mb-4 { margin-bottom: 16px; }
+/* Utility */
+.card { background: rgba(0, 0, 0, 0.1); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.hint { color: var(--muted); font-size: 12px; }
+.requires-admin { display: none; }
 
-        /* Loading Spinner */
-        .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
-
-        /* 3D Background Effect */
-        .bg-effect {
-            position: fixed; top: 50%; left: 50%; width: 600px; height: 600px;
-            background: radial-gradient(circle, rgba(251,191,36,0.03), transparent 70%);
-            transform: translate(-50%, -50%); z-index: -1; pointer-events: none;
-        }
-
-        /* Login Screen */
-        #login-overlay {
-            position: fixed; inset: 0; background: var(--bg-dark); z-index: 9999;
-            display: flex; justify-content: center; align-items: center;
-        }
-        .login-card {
-            width: 400px; background: var(--bg-panel); border: 1px solid var(--glass-border);
-            padding: 40px; border-radius: 20px; box-shadow: var(--shadow-glow);
-            text-align: center;
-        }
-    </style>
+@media (max-width: 768px) {
+.app-wrapper { flex-direction: column; }
+.sidebar { width: 100%; height: 60px; flex-direction: row; overflow-x: auto; }
+.tabs { flex-direction: row; }
+.tab-btn span { display: none; }
+}
+</style>
 </head>
 <body>
 
-    <!-- 3D Background Aura -->
-    <div class="bg-effect"></div>
+<!-- TOAST -->
+<div id="toast" class="toast"><div id="toastMessage"></div></div>
 
-    <!-- LOGIN -->
-    <div id="login-overlay">
-        <div class="login-card">
-            <h1 class="brand" style="justify-content:center; margin-bottom: 20px;">NEXUS</h1>
-            <p style="color:var(--text-muted); margin-bottom:30px;">Secure Inventory System</p>
-            <form id="loginForm">
-                <div class="mb-4">
-                    <input type="text" id="username" class="form-control" placeholder="Username" required>
-                </div>
-                <div class="mb-4">
-                    <input type="password" id="password" class="form-control" placeholder="Password" required>
-                </div>
-                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
-                    <span id="loginText">Sign In</span>
-                    <span id="loginSpinner" class="spinner hidden"></span>
-                </button>
-            </form>
-        </div>
-    </div>
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+<div class="login-box">
+<div style="font-size: 24px; font-weight: 700; margin-bottom: 8px; color: var(--cyan);">GUDANG MLASS</div>
+<div style="color: var(--muted); margin-bottom: 24px;">Masuk ke sistem manajemen stok.</div>
+<form onsubmit="handleLoginSubmit(event)">
+<div style="text-align: left; margin-bottom: 12px;">
+<label class="hint">Username</label>
+<input id="loginUsername" class="input" placeholder="admin" required />
+</div>
+<div style="text-align: left; margin-bottom: 16px;">
+<label class="hint">Password</label>
+<input id="loginPassword" class="input" type="password" placeholder="•••••••" required />
+</div>
+<div id="loginError" class="hint" style="color: var(--red); margin-bottom: 16px; display: none;"></div>
+<button type="submit" class="btn btn-primary" style="width:100%">MASUK DASHBOARD</button>
+</form>
+</div>
+</div>
 
-    <!-- MAIN APP -->
-    <div class="app-container hidden" id="mainApp">
-        <!-- Sidebar -->
-        <nav class="sidebar">
-            <div class="brand">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                NEXUS
-            </div>
-            
-            <div class="nav-menu">
-                <div class="nav-item active" onclick="app.navigate('dashboard')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                    Dashboard
-                </div>
-                <div class="nav-item" onclick="app.navigate('transIn')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
-                    Barang Masuk
-                </div>
-                <div class="nav-item" onclick="app.navigate('transOut')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M12 5v14"/></svg>
-                    Barang Keluar
-                </div>
-                <div class="nav-item" onclick="app.navigate('opname')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    Stock Opname
-                </div>
-                <div class="nav-item" onclick="app.navigate('suppliers')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    Supplier
-                </div>
-                <div class="nav-item" onclick="app.navigate('admin')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                    Admin Panel
-                </div>
-            </div>
-        </nav>
+<!-- MAIN APP -->
+<div class="app-wrapper" id="appRoot">
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-brand"><iconify-icon icon="mdi:warehouse"></iconify-icon> Gudang MLASS</div>
+<nav class="tabs">
+<div class="tab-btn active" onclick="switchTab('dashboard')"><iconify-icon icon="mdi:view-dashboard"></iconify-icon><span>Dashboard</span></div>
+<div class="tab-btn" onclick="switchTab('masuk')"><iconify-icon icon="mdi:package-variant-closed"></iconify-icon><span>Masuk</span></div>
+<div class="tab-btn" onclick="switchTab('keluar')"><iconify-icon icon="mdi:cart-arrow-up"></iconify-icon><span>Keluar</span></div>
+<div class="tab-btn requires-admin" onclick="switchTab('admin')"><iconify-icon icon="mdi:shield-crown-outline"></iconify-icon><span>Admin</span></div>
+<div style="margin-top: auto; padding-top: 20px;">
+<button class="btn btn-danger" onclick="logoutUser()" style="padding: 10px; width:100%"><iconify-icon icon="mdi:logout"></iconify-icon> Keluar</button>
+</div>
+</nav>
+</aside>
 
-        <!-- Content -->
-        <main class="main-content">
-            <header class="header">
-                <h2 id="pageTitle" style="font-size:18px; font-weight:600;">Dashboard</h2>
-                <div class="user-profile" style="display:flex; align-items:center; gap:10px;">
-                    <div style="text-align:right;">
-                        <div id="displayUser" style="font-weight:600; font-size:14px;">User</div>
-                        <div style="font-size:11px; color:var(--success);">Online</div>
-                    </div>
-                    <button class="btn btn-outline" style="padding:8px;" onclick="app.logout()" title="Logout">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                    </button>
-                </div>
-            </header>
-            
-            <div id="contentArea" class="content-scroll">
-                <!-- Views Injected Here -->
-            </div>
-        </main>
-    </div>
+<main class="main-content">
+<header style="display:flex; justify-content:space-between; margin-bottom:20px;">
+<div class="user-info" style="background:rgba(255,255,255,0.05); padding:8px 16px; border-radius:50px; display:flex; align-items:center; gap:10px;">
+<iconify-icon icon="mdi:account-circle"></iconify-icon> <span id="displayUsername">Guest</span>
+</div>
+</header>
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastArea"></div>
+<!-- TAB: DASHBOARD -->
+<div id="tab-dashboard" class="glass-panel active">
+<h2>Dashboard</h2>
+<div class="row" style="margin-top:20px;">
+<div class="card">
+<div class="hint">Total Stok</div>
+<div style="font-size:2rem; font-weight:700;" id="statTotalStok">-</div>
+</div>
+<div class="card">
+<div class="hint">Barang Low Stock</div>
+<div style="font-size:2rem; font-weight:700; color:var(--red);" id="statLowStok">-</div>
+</div>
+</div>
+<button class="btn btn-success" onclick="loadDashboard()">Refresh Data</button>
+</div>
+
+<!-- TAB: MASUK -->
+<div id="tab-masuk" class="glass-panel">
+<h2>Barang Masuk</h2>
+<div class="card">
+<p class="hint">Modul ini membutuhkan implementasi frontend sesuai kebutuhan.</p>
+</div>
+</div>
+
+<!-- TAB: KELUAR -->
+<div id="tab-keluar" class="glass-panel">
+<h2>Barang Keluar</h2>
+<div class="card">
+<p class="hint">Modul ini membutuhkan implementasi frontend sesuai kebutuhan.</p>
+</div>
+</div>
+
+<!-- TAB: ADMIN -->
+<div id="tab-admin" class="glass-panel requires-admin">
+<h2>Admin Panel</h2>
+<div class="card">
+<p class="hint">Hanya admin yang bisa melihat ini.</p>
+</div>
+</div>
+
+</main>
+</div>
 
 <script>
-    /**
-     * KONFIGURASI URL BACKEND
-     */
-    const GAS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4oO5vkcd2YTpjp2QfRlNas7zKRcPoN0PzOnx9oWzWWBWwb882r30d_sWTTXS5rVJl/exec"; 
+// ==========================================
+// KONFIGURASI PENTING
+// ==========================================
+// Ganti URL di bawah ini dengan URL Web App Google Apps Script Anda
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw32GkW0u4wZCyo2_GmzACTOvQet2xNFN2r8IJOLTFMES2VJ6DT_9JJaL66ayBcDlN2SA/exec'; 
 
-    // --- STATE & CACHE ---
-    const state = {
-        user: null,
-        masterItems: [], // Cache Barang
-        suppliers: [],
-        cart: [],
-        selectedItem: null
-    };
-
-    // --- ICONS (SVG PATHS) ---
-    const ICONS = {
-        box: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>',
-        alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
-        check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>'
-    };
-
-    // --- UTILS ---
-    async function callGAS(action, params = {}, showLoading = true) {
-        if (showLoading) showLoadingToast(true);
-        try {
-            const response = await fetch(GAS_SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action, params })
-            });
-            if (!response.ok) throw new Error("Network Error");
-            const json = await response.json();
-            if (json.status === 'error') throw new Error(json.message);
-            return json;
-        } catch (e) {
-            showToast(e.message, 'error');
-            throw e;
-        } finally {
-            if (showLoading) showLoadingToast(false);
+// ==========================================
+// API BRIDGE (Menggantikan google.script.run)
+// ==========================================
+async function callGAS(action, payload = {}) {
+    updateStatus('Memproses...', 'info');
+    try {
+        // Mengirim POST request ke GAS
+        const response = await fetch(GAS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: action, payload: payload })
+        });
+        
+        const result = await response.json();
+        
+        // Jika backend mengembalikan error
+        if (result.success === false) {
+            throw new Error(result.message || 'Terjadi kesalahan');
         }
+        
+        return result; // Kembalikan data mentah untuk diproses fungsi
+        
+    } catch (error) {
+        console.error('API Error:', error);
+        showToast(error.message, 'error');
+        throw error; // Re-throw agar bisa ditangkap .catch() pemanggil
+    }
+}
+
+// ==========================================
+// STATE MANAGEMENT
+// ==========================================
+let currentUser = { role: 'guest', allowedTabs: [] };
+
+// ==========================================
+// UI UTILITIES
+// ==========================================
+function showToast(message, type = 'info', duration = 3000) {
+    const toast = document.getElementById('toast');
+    const msg = document.getElementById('toastMessage');
+    msg.textContent = message;
+    toast.className = `toast show ${type}`;
+    setTimeout(() => toast.classList.remove('show'), duration);
+}
+
+function updateStatus(message, type = 'info') {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+}
+
+function switchTab(name) {
+    // Cek Permission
+    if (currentUser.role !== 'ADMIN' && name === 'admin') {
+        showToast('Akses Ditolak', 'error');
+        return;
     }
 
-    function showToast(msg, type = 'success', title = '') {
-        const container = document.getElementById('toastArea');
-        const t = document.createElement('div');
-        t.className = `toast ${type}`;
+    // UI Switch
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.glass-panel').forEach(p => p.classList.remove('active'));
+    
+    // Find simple button match (simplified selector)
+    const btns = document.querySelectorAll('.tab-btn');
+    // (In real app, map IDs better)
+    
+    document.getElementById('tab-' + name).classList.add('active');
+
+    // Load Data
+    if(name === 'dashboard') loadDashboard();
+}
+
+// ==========================================
+// AUTH & LOGIC (Menggunakan callGAS)
+// ==========================================
+
+async function handleLoginSubmit(e) {
+    e.preventDefault();
+    const u = document.getElementById('loginUsername').value;
+    const p = document.getElementById('loginPassword').value;
+    const err = document.getElementById('loginError');
+
+    if(!u || !p) { err.textContent = "Isi semua field"; err.style.display="block"; return; }
+
+    try {
+        // PANGGIL API LOGIN
+        const res = await callGAS('LOGIN', { username: u, password: p });
         
-        let iconHtml = type === 'success' ? ICONS.check : (type === 'error' ? ICONS.alert : ICONS.box);
-        let titleHtml = title ? `<h4>${title}</h4>` : '';
+        // Handle Sukses
+        currentUser = {
+            username: res.username,
+            role: res.role,
+            allowedTabs: res.allowedTabs
+        };
         
-        t.innerHTML = `
-            <div style="color: ${type === 'success' ? 'var(--success)' : (type === 'error' ? 'var(--danger)' : 'var(--primary)')}">${iconHtml}</div>
-            <div class="toast-content">${titleHtml}<p>${msg}</p></div>
-        `;
-        container.appendChild(t);
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appRoot').style.display = 'flex';
+        document.getElementById('displayUsername').textContent = currentUser.username;
         
-        // Auto remove after 3s
-        setTimeout(() => {
-            t.style.opacity = '0'; t.style.transform = 'translateX(20px)';
-            setTimeout(() => t.remove(), 300);
-        }, 3000);
+        applyRoleUI();
+        loadDashboard();
+        showToast('Login Berhasil!', 'success');
+
+    } catch (err) {
+        document.getElementById('loginError').textContent = err.message;
+        document.getElementById('loginError').style.display = 'block';
     }
+}
 
-    function showLoadingToast(isLoading) {
-        const id = 'loading-toast';
-        if (isLoading) {
-            if (document.getElementById(id)) return;
-            const t = document.createElement('div');
-            t.id = id;
-            t.className = 'toast info';
-            t.innerHTML = `<div class="spinner" style="width:20px;height:20px;border-top-color:var(--text-main)"></div><div class="toast-content"><p>Memproses...</p></div>`;
-            document.getElementById('toastArea').appendChild(t);
-        } else {
-            const t = document.getElementById(id);
-            if (t) t.remove();
-        }
-    }
+function logoutUser() {
+    localStorage.removeItem('WAREFLOW_USER');
+    location.reload();
+}
 
-    // --- AUTOCOMPLETE (CACHED) ---
-    class Autocomplete {
-        constructor(inputId, callback) {
-            this.input = document.getElementById(inputId);
-            this.callback = callback;
-            this.activeIndex = -1;
-            this.wrapper = this.input.parentElement;
-            
-            this.input.addEventListener('input', (e) => this.handleInput(e));
-            this.input.addEventListener('keydown', (e) => this.handleKey(e));
-            document.addEventListener('click', (e) => {
-                if (e.target !== this.input) this.close();
-            });
-        }
+function applyRoleUI() {
+    const adminEls = document.querySelectorAll('.requires-admin');
+    adminEls.forEach(el => {
+        el.style.display = (currentUser.role === 'ADMIN') ? 'block' : 'none';
+    });
+}
 
-        handleInput(e) {
-            const val = this.input.value.toLowerCase();
-            this.activeIndex = -1;
-            if (val.length < 2) return this.close();
-
-            // SEARCH FROM LOCAL CACHE (Instant)
-            const filtered = state.masterItems.filter(row => row.nama.toLowerCase().includes(val)).slice(0, 10);
-            this.items = filtered;
-            this.render();
-        }
-
-        handleKey(e) {
-            const list = this.wrapper.querySelector('.autocomplete-items');
-            if (!list) return;
-            const items = list.getElementsByTagName('div');
-            if (e.key === 'ArrowDown') { this.activeIndex++; this.updateActive(items); }
-            else if (e.key === 'ArrowUp') { this.activeIndex--; this.updateActive(items); }
-            else if (e.key === 'Enter') { e.preventDefault(); if (this.activeIndex > -1 && items[this.activeIndex]) items[this.activeIndex].click(); }
-            else if (e.key === 'Escape') this.close();
-        }
-
-        updateActive(items) {
-            if (!items) return;
-            for (let i = 0; i < items.length; i++) items[i].classList.remove('active');
-            if (this.activeIndex >= items.length) this.activeIndex = 0;
-            if (this.activeIndex < 0) this.activeIndex = items.length - 1;
-            if (items[this.activeIndex]) {
-                items[this.activeIndex].classList.add('active');
-                items[this.activeIndex].scrollIntoView({ block: 'nearest' });
-            }
-        }
-
-        render() {
-            this.close();
-            if (this.items.length === 0) return;
-
-            const list = document.createElement('div');
-            list.className = 'autocomplete-items';
-            
-            this.items.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = 'autocomplete-item';
-                // Highlight logic simplified
-                div.innerHTML = `
-                    <div>
-                        <div style="font-weight:600; color:var(--text-main)">${item.nama}</div>
-                        <div style="font-size:11px; color:var(--text-muted)">ID: ${item.id.substring(0,6)}</div>
-                    </div>
-                    <div class="badge ${item.stok <= item.minStok ? 'badge-red' : 'badge-green'}">${item.stok} ${item.defaultUnit}</div>
-                `;
-                div.addEventListener('click', () => {
-                    this.input.value = item.nama;
-                    this.callback(item);
-                    this.close();
-                });
-                list.appendChild(div);
-            });
-            this.wrapper.appendChild(list);
-        }
-
-        close() {
-            const list = this.wrapper.querySelector('.autocomplete-items');
-            if (list) list.remove();
-        }
-    }
-
-    // --- APP LOGIC ---
-    const app = {
-        init: async () => {
-            const savedUser = sessionStorage.getItem('user');
-            if (savedUser) {
-                app.loginSuccess(JSON.parse(savedUser));
-            }
-            
-            document.getElementById('loginForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const btn = document.querySelector('#loginForm button');
-                document.getElementById('loginText').classList.add('hidden');
-                document.getElementById('loginSpinner').classList.remove('hidden');
-                
-                try {
-                    const u = document.getElementById('username').value;
-                    const p = document.getElementById('password').value;
-                    const res = await callGAS('login', { username: u, password: p }, false); // manual loading
-                    sessionStorage.setItem('user', JSON.stringify(res.user));
-                    app.loginSuccess(res.user);
-                } catch (err) {
-                    document.getElementById('loginText').classList.remove('hidden');
-                    document.getElementById('loginSpinner').classList.add('hidden');
-                }
-            });
-        },
-
-        loginSuccess: async (user) => {
-            state.user = user;
-            document.getElementById('login-overlay').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-            document.getElementById('mainApp').style.opacity = 0; // Fade in effect
-            setTimeout(() => document.getElementById('mainApp').style.opacity = 1, 50);
-            
-            document.getElementById('displayUser').textContent = user.username;
-
-            // LOAD CACHE
-            try {
-                const res = await callGAS('getAllItems', {}, false);
-                state.masterItems = res.items;
-                showToast('Master data loaded', 'success', 'Cache Ready');
-                app.navigate('dashboard');
-            } catch (e) {
-                showToast('Gagal memuat data master', 'error');
-            }
-        },
-
-        logout: () => {
-            sessionStorage.removeItem('user');
-            location.reload();
-        },
-
-        // NON-BLOCKING NAVIGATION
-        navigate: (viewName) => {
-            state.view = viewName;
-            state.cart = []; 
-            
-            // Update Active Nav
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            const navs = document.querySelectorAll('.nav-item');
-            const map = { 'dashboard':0, 'transIn':1, 'transOut':2, 'opname':3, 'suppliers':4, 'admin':5 };
-            if(map[viewName] !== undefined) navs[map[viewName]].classList.add('active');
-
-            // Show Loading Skeleton Immediately (No Lag)
-            const content = document.getElementById('contentArea');
-            const title = document.getElementById('pageTitle');
-            title.textContent = viewName.charAt(0).toUpperCase() + viewName.slice(1).replace(/([A-Z])/g, ' $1').trim();
-            
-            content.innerHTML = `
-                <div class="card" style="display:flex; justify-content:center; align-items:center; height:300px; flex-direction:column; gap:20px;">
-                    <div class="spinner" style="width:40px; height:40px; border-width:3px;"></div>
-                    <p class="text-muted">Memuat data...</p>
-                </div>
-            `;
-
-            // Render Views (Async)
-            setTimeout(async () => {
-                switch (viewName) {
-                    case 'dashboard': await app.renderDashboard(); break;
-                    case 'transIn': await app.renderTransaction('IN'); break;
-                    case 'transOut': await app.renderTransaction('OUT'); break;
-                    case 'opname': await app.renderOpname(); break;
-                    case 'suppliers': await app.renderSuppliers(); break;
-                    case 'admin': await app.renderAdmin(); break;
-                }
-            }, 50); // Small delay to let UI render loading state
-        },
-
-        // --- VIEWS (Logic similar to before but with better HTML structure) ---
+// ==========================================
+// DASHBOARD LOGIC
+// ==========================================
+async function loadDashboard() {
+    try {
+        // PANGGIL API DASHBOARD
+        const res = await callGAS('GET_DASHBOARD');
         
-        renderDashboard: async () => {
-            const res = await callGAS('getDashboard', { username: state.user.username });
-            const s = res.stats;
-            const lowItemsHtml = res.lowStockItems.length ? res.lowStockItems.map(i => `
-                <tr>
-                    <td><span class="text-gold">●</span> ${i.name}</td>
-                    <td><span class="badge badge-red">${i.stok}</span></td>
-                </tr>
-            `).join('') : '<tr><td colspan="2" style="text-align:center; color:#666">Stok Aman</td></tr>';
-
-            const topOutHtml = res.topOut.length ? res.topOut.map((t, i) => `
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.05);">
-                    <span>#${i+1} ${t.name}</span>
-                    <span class="text-gold" style="font-weight:700">${t.total}</span>
-                </div>
-            `).join('') : '<div style="color:#666">Belum ada data</div>';
-
-            const html = `
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">Total Barang</div>
-                        <div class="stat-value">${s.totalBarang}</div>
-                        <div class="stat-icon">${ICONS.box}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Total Stok</div>
-                        <div class="stat-value">${s.totalStok}</div>
-                        <div class="stat-icon">${ICONS.alert}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Trx Masuk</div>
-                        <div class="stat-value text-gold">${s.transInToday}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Trx Keluar</div>
-                        <div class="stat-value text-gold">${s.transOutToday}</div>
-                    </div>
-                </div>
-                
-                <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:24px;">
-                    <div class="card">
-                        <div class="flex-between mb-4">
-                            <h3 style="font-size:16px;">Stok Menipis</h3>
-                            <span class="badge badge-red">${res.lowStockItems.length} Items</span>
-                        </div>
-                        <table>
-                            <tbody>${lowItemsHtml}</tbody>
-                        </table>
-                    </div>
-                    <div class="card">
-                        <h3 class="mb-4" style="font-size:16px;">Top 3 Keluar</h3>
-                        <div>${topOutHtml}</div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('contentArea').innerHTML = html;
-        },
-
-        renderTransaction: async (type) => {
-            const isOut = type === 'OUT';
-            
-            // Fetch Suppliers if IN
-            let suppOptions = '';
-            if (!isOut) {
-                const sRes = await callGAS('getSuppliers');
-                state.suppliers = sRes.data;
-                suppOptions = `<option value="">Pilih Supplier...</option>` + state.suppliers.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
-            }
-
-            const html = `
-                <div class="card">
-                    <h2 class="mb-4 text-gold">${isOut ? 'Barang Keluar' : 'Barang Masuk'}</h2>
-                    
-                    <form id="transForm">
-                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px; margin-bottom:16px;">
-                            ${!isOut ? `
-                                <div><label class="mb-4" style="font-size:12px; color:#94a3b8; display:block;">Supplier</label>
-                                <select id="tSupplier" class="form-control">${suppOptions}</select></div>
-                                <div><label class="mb-4" style="font-size:12px; color:#94a3b8; display:block;">Nomor PO</label>
-                                <input type="text" id="tPo" class="form-control"></div>
-                                <div><label class="mb-4" style="font-size:12px; color:#94a3b8; display:block;">Surat Jalan</label>
-                                <input type="text" id="tSj" class="form-control"></div>
-                            ` : `
-                                <div style="grid-column: span 3;">
-                                    <label class="mb-4" style="font-size:12px; color:#94a3b8; display:block;">Tanggal Transaksi</label>
-                                    <input type="date" id="tDate" class="form-control" value="${new Date().toISOString().split('T')[0]}">
-                                </div>
-                            `}
-                        </div>
-
-                        <div style="background:rgba(0,0,0,0.2); padding:20px; border-radius:12px; margin-bottom:20px; border:1px dashed var(--glass-border);">
-                            <h4 class="mb-4" style="font-size:14px;">Tambah Item</h4>
-                            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:16px;">
-                                <div>
-                                    <label style="font-size:12px; color:#94a3b8; display:block;">Cari Barang</label>
-                                    <div class="autocomplete-wrapper">
-                                        <input type="text" id="acItem" class="form-control" placeholder="Ketik nama barang...">
-                                    </div>
-                                </div>
-                                <div>
-                                    <label style="font-size:12px; color:#94a3b8; display:block;">Quantity</label>
-                                    <input type="number" id="acQty" class="form-control" min="0.1" step="0.1">
-                                </div>
-                            </div>
-                            
-                            <div style="margin-top:10px;">
-                                <label style="font-size:12px; color:#94a3b8; display:block;">Satuan</label>
-                                <div id="unitContainer" class="unit-group">
-                                    <button type="button" class="unit-btn" disabled>Pilih Barang Dulu</button>
-                                </div>
-                                <input type="hidden" id="selectedUnit"><input type="hidden" id="convFactor"><input type="hidden" id="stockAvailable">
-                            </div>
-
-                            <div style="margin-top:16px;">
-                                <label style="font-size:12px; color:#94a3b8; display:block;">Catatan</label>
-                                <input type="text" id="tNotes" class="form-control" placeholder="Keterangan item...">
-                            </div>
-                            
-                            <button type="button" class="btn btn-outline mt-4" onclick="app.addToCart('${type}')">+ Tambah ke List</button>
-                        </div>
-                    </form>
-
-                    <div class="card" style="min-height:150px; border-left: 4px solid var(--primary);">
-                        <h3 class="mb-4">Daftar Item</h3>
-                        <div id="cartList" style="max-height:200px; overflow-y:auto;">
-                            <div style="text-align:center; color:#666; padding:20px;">Belum ada item</div>
-                        </div>
-                    </div>
-
-                    <div style="text-align:right; margin-top:20px;">
-                        <button type="button" class="btn btn-primary" onclick="app.saveTransaction('${type}')">Simpan Transaksi</button>
-                    </div>
-                </div>
-            `;
-            document.getElementById('contentArea').innerHTML = html;
-
-            // Init Autocomplete using Local Cache
-            new Autocomplete('acItem', (item) => {
-                state.selectedItem = item;
-                app.renderUnitButtons(item);
-                document.getElementById('stockAvailable').value = item.stok;
-            });
-        },
-
-        renderUnitButtons: (item) => {
-            const container = document.getElementById('unitContainer');
-            const btns = [
-                { u: item.defaultUnit, f: 1 },
-                { u: item.alt1, f: parseFloat(item.conv1) },
-                { u: item.alt2, f: parseFloat(item.conv2) }
-            ].filter(b => b.u);
-
-            container.innerHTML = '';
-            btns.forEach((b, idx) => {
-                const btn = document.createElement('button');
-                btn.type = 'button'; btn.className = `unit-btn ${idx===0?'active':''}`; btn.textContent = b.u;
-                btn.onclick = () => {
-                    container.querySelectorAll('.unit-btn').forEach(x => x.classList.remove('active'));
-                    btn.classList.add('active');
-                    document.getElementById('selectedUnit').value = b.u;
-                    document.getElementById('convFactor').value = b.f;
-                    
-                    const qtyInput = document.getElementById('acQty');
-                    if(qtyInput.value) app.validateQty(qtyInput.value, item.stok, b.f);
-                };
-                container.appendChild(btn);
-                if(idx===0) {
-                    document.getElementById('selectedUnit').value = b.u;
-                    document.getElementById('convFactor').value = b.f;
-                }
-            });
-        },
-
-        validateQty: (qty, stock, factor) => {
-            const qtyDefault = qty * factor;
-            if (qtyDefault > stock) {
-                showToast(`Stok kurang! Max: ${(stock/factor).toFixed(2)}`, 'error');
-                return false;
-            }
-            return true;
-        },
-
-        addToCart: (type) => {
-            const item = state.selectedItem;
-            const qty = parseFloat(document.getElementById('acQty').value);
-            const unit = document.getElementById('selectedUnit').value;
-            const factor = parseFloat(document.getElementById('convFactor').value);
-
-            if (!item) return showToast('Pilih barang dulu', 'error');
-            if (!qty || qty <= 0) return showToast('Isi quantity', 'error');
-            if (type === 'OUT' && !app.validateQty(qty, item.stok, factor)) return;
-
-            state.cart.push({
-                id: item.id, nama: item.nama, qty: qty, unit: unit,
-                qtyDefault: qty * factor
-            });
-
-            app.renderCart(type);
-            
-            // Reset
-            document.getElementById('acItem').value = ''; document.getElementById('acQty').value = '';
-            document.getElementById('unitContainer').innerHTML = '<button type="button" class="unit-btn" disabled>Pilih Barang</button>';
-            state.selectedItem = null;
-        },
-
-        renderCart: (type) => {
-            const list = document.getElementById('cartList');
-            if (state.cart.length === 0) return list.innerHTML = '<div style="text-align:center; color:#666;">Belum ada item</div>';
-            
-            list.innerHTML = state.cart.map((c, i) => `
-                <div class="flex-between" style="background:rgba(255,255,255,0.02); padding:10px; border-radius:8px; margin-bottom:5px;">
-                    <div>
-                        <div style="font-weight:500;">${c.nama}</div>
-                        <div style="font-size:11px; color:#888;">${c.qty} ${c.unit}</div>
-                    </div>
-                    <button class="btn btn-danger" style="padding:4px 8px; font-size:10px;" onclick="app.removeFromCart(${i})">Hapus</button>
-                </div>
-            `).join('');
-        },
-
-        removeFromCart: (idx) => {
-            state.cart.splice(idx, 1);
-            app.renderCart(state.view === 'transIn' ? 'IN' : 'OUT');
-        },
-
-        saveTransaction: async (type) => {
-            if (state.cart.length === 0) return showToast('Keranjang kosong', 'error');
-            const params = {
-                type, date: document.getElementById('tDate').value, notes: document.getElementById('tNotes').value,
-                user: state.user.username, items: state.cart
-            };
-            if (type === 'IN') {
-                params.supplier = document.getElementById('tSupplier').value;
-                params.po = document.getElementById('tPo').value;
-                params.suratJalan = document.getElementById('tSj').value;
-                params.photos = [];
-            }
-
-            await callGAS('saveTransaction', params);
-            showToast('Transaksi Berhasil Disimpan', 'success');
-            app.navigate('dashboard');
-        },
-
-        // ... (Lainnya seperti Opname, Supplier, Admin logic disederhanakan untuk prompt response tapi tetap functional) ...
-        renderOpname: () => {
-            const html = `
-                <div class="card">
-                    <h2 class="text-gold mb-4">Stock Opname</h2>
-                    <div class="form-group mb-4">
-                        <label style="color:#94a3b8; font-size:12px;">Cari Barang</label>
-                        <div class="autocomplete-wrapper"><input type="text" id="opItem" class="form-control"></div>
-                    </div>
-                    <div class="flex-between mb-4">
-                         <input type="number" id="opQty" class="form-control" placeholder="Stok Fisik" style="width:48%">
-                         <div id="opUnitDisplay" class="form-control" style="width:48%; text-align:center;">-</div>
-                    </div>
-                    <button class="btn btn-primary" onclick="app.saveOpname()">Simpan Koreksi</button>
-                </div>
-            `;
-            document.getElementById('contentArea').innerHTML = html;
-            
-            new Autocomplete('opItem', (item) => {
-                state.selectedItem = item;
-                document.getElementById('opUnitDisplay').textContent = item.defaultUnit;
-            });
-        },
-
-        saveOpname: async () => {
-            if(!state.selectedItem) return showToast('Pilih barang', 'error');
-            const params = {
-                itemId: state.selectedItem.id, physicalQty: parseFloat(document.getElementById('opQty').value),
-                unit: state.selectedItem.defaultUnit, conversion: 1, notes: 'Opname Manual', user: state.user.username
-            };
-            const res = await callGAS('saveStockOpname', params);
-            showToast(`Koreksi tersimpan. Selisih: ${res.diff}`, 'success');
-            document.getElementById('opQty').value = '';
-        },
-
-        renderSuppliers: async () => {
-            const res = await callGAS('getSuppliers');
-            const html = `
-                <div class="card">
-                    <div class="flex-between mb-4">
-                        <h2>Supplier</h2>
-                        <button class="btn btn-primary" onclick="showToast('Fitur tambah supplier diimplementasikan', 'info')">+ New</button>
-                    </div>
-                    <table>
-                        <thead><tr><th>Nama</th><th>Kontak</th><th>Aksi</th></tr></thead>
-                        <tbody>
-                            ${res.data.map(s => `
-                                <tr>
-                                    <td>${s.name}</td><td>${s.contact}</td>
-                                    <td><button class="btn btn-danger" style="padding:5px 10px; font-size:11px;" onclick="app.delSupplier(${s.rowIdx})">Hapus</button></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            document.getElementById('contentArea').innerHTML = html;
-        },
-
-        delSupplier: async (rowIdx) => {
-            if(!confirm('Hapus supplier?')) return;
-            await callGAS('deleteSupplier', { rowIdx });
-            app.renderSuppliers();
-        },
-
-        renderAdmin: async () => {
-             if (state.user.role !== 'admin') return document.getElementById('contentArea').innerHTML = '<h2 style="color:red">Akses Ditolak</h2>';
-             const res = await callGAS('getLogs');
-             const html = `
-                <div class="card">
-                    <h2>Admin Panel</h2>
-                    <div class="mb-4" style="padding:20px; border:2px dashed var(--glass-border); border-radius:12px; text-align:center;">
-                        <label for="excelFile" class="btn btn-outline">Upload Master Data (Excel)</label>
-                        <input type="file" id="excelFile" class="hidden" accept=".xlsx, .xls">
-                    </div>
-                    <h3>Activity Log</h3>
-                    <table>
-                        <thead><tr><th>Time</th><th>User</th><th>Action</th></tr></thead>
-                        <tbody>${res.logs.map(l => `<tr><td>${new Date(l[0]).toLocaleTimeString()}</td><td>${l[1]}</td><td>${l[2]}</td></tr>`).join('')}</tbody>
-                    </table>
-                </div>
-             `;
-             document.getElementById('contentArea').innerHTML = html;
-             
-             document.getElementById('excelFile').addEventListener('change', async (e) => {
-                 const reader = new FileReader();
-                 reader.onload = async (evt) => {
-                     const wb = XLSX.read(evt.target.result, {type: 'array'});
-                     const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-                     if(data.length > 0) data.shift();
-                     await callGAS('uploadMasterData', { data });
-                     showToast('Data Uploaded', 'success');
-                 };
-                 reader.readAsArrayBuffer(e.target.files[0]);
-             });
+        if(res.stats) {
+            document.getElementById('statTotalStok').textContent = res.stats.totalStok;
+            document.getElementById('statLowStok').textContent = res.stats.lowStok;
         }
-    };
+    } catch (e) {
+        console.error(e);
+    }
+}
 
-    app.init();
+// ==========================================
+// INIT
+// ==========================================
+window.onload = function() {
+    // Auto login check bisa ditambahkan di sini menggunakan localStorage
+};
 </script>
 </body>
 </html>
